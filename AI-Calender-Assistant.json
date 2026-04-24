@@ -1,0 +1,478 @@
+{
+    "nodes": [
+      {
+        "parameters": {
+          "updates": [
+            "message"
+          ],
+          "additionalFields": {}
+        },
+        "type": "n8n-nodes-base.telegramTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          -256,
+          -16
+        ],
+        "id": "23640ae0-bb7c-4570-a018-b86db2c57c45",
+        "name": "Telegram Trigger",
+        "webhookId": "889cb1df-63fb-43c7-8f5b-364d1d4933ee",
+        "credentials": {
+          "telegramApi": {
+            "id": "9PBaEVbiPe8FZHio",
+            "name": "Telegram account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "resource": "file",
+          "fileId": "={{ $json.message.voice.file_id }}",
+          "additionalFields": {}
+        },
+        "type": "n8n-nodes-base.telegram",
+        "typeVersion": 1.2,
+        "position": [
+          176,
+          -224
+        ],
+        "id": "b4b993c3-ba33-44ff-b4d0-fd6685fb28ac",
+        "name": "Get a file",
+        "webhookId": "c363a86e-7722-4355-9ed2-dfa6d984a57b",
+        "credentials": {
+          "telegramApi": {
+            "id": "9PBaEVbiPe8FZHio",
+            "name": "Telegram account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "options": {}
+        },
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          352,
+          0
+        ],
+        "id": "c2a0f5fc-8572-4fee-8923-9f416c308a30",
+        "name": "Edit Fields"
+      },
+      {
+        "parameters": {
+          "rules": {
+            "values": [
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "leftValue": "={{ $json.message.voice.file_id }}",
+                      "rightValue": "",
+                      "operator": {
+                        "type": "string",
+                        "operation": "exists",
+                        "singleValue": true
+                      },
+                      "id": "3c99a3b2-5b05-4539-8d36-130c36b7261e"
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "Voice"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "id": "d644458c-79ab-4360-8466-9a905b5dc33b",
+                      "leftValue": "={{ $json.message.text || \"\" }}",
+                      "rightValue": "",
+                      "operator": {
+                        "type": "string",
+                        "operation": "exists",
+                        "singleValue": true
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "Text"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.switch",
+        "typeVersion": 3.3,
+        "position": [
+          -48,
+          -16
+        ],
+        "id": "8509d0f2-90a9-444a-9a80-ccb62553f19f",
+        "name": "Text or Audio"
+      },
+      {
+        "parameters": {
+          "promptType": "define",
+          "text": "=You are a calendar assistant.\n\nIMPORTANT RULES:\n- You MUST use tools for any calendar related task.\n- NEVER answer from your knowledge.\n- ALWAYS call a tool if the request is about events.\n- Only respond normally if it's not calendar related.\n\nUser message is in: {{$json.input}}",
+          "options": {
+            "systemMessage": "=You are an autonomous calendar execution agent.\n\nCurrent date and time: {{$now}}\nTimezone: Asia/Tehran\n\nRULES:\n- The user message is ALWAYS an instruction.\n- NEVER ask for confirmation, questions, or suggestions.\n- ALWAYS execute calendar instructions using the appropriate tools (Get, Create, Update, Delete).\n- For any time-range check or event manipulation, use the calendar tools only once per unique time range.\n- After the first Get Event call per range, make all decisions (create, update, delete) based on that result. Do not call Get Event repeatedly for the same period.\n- Convert ALL times to ISO 8601 format. Always provide both start and end times.\n- NEVER use natural language times like \"9pm\".\n- If an event to delete or update does not exist, skip it silently and continue.\n- After executing all instructions, return a concise summary in Persian:\n    - List created, deleted, and existing events\n    - Show the final updated schedule in a simple, organized format\n- Do not include unnecessary text, polite chatter, or repetition. Keep output strictly factual and concise.\n\nTIME RULES:\n- Interpret all relative times based on the datetime above.\n\nBEHAVIOR:\n- You are NOT a chatbot. You are an automation executor.\n- After finishing all tool calls, return a concise summary and the updated daily schedule.\n\nWhen using Get Event tool:\n- ALWAYS provide BOTH: After (start time) and Before (end time)\n- Before MUST be later than After. Never leave them empty.\n\nFor Update or Delete:\n1) First call Get Event to find the correct event ID\n2) Then use that ID for Update or Delete\nNever guess an ID.\n\n\nremember to add title while creating or updating event and the title is what the user told you.\nand answer the user with the input language."
+          }
+        },
+        "type": "@n8n/n8n-nodes-langchain.agent",
+        "typeVersion": 3,
+        "position": [
+          800,
+          0
+        ],
+        "id": "3b9b7e7c-f569-4278-a090-65ed27cb4f15",
+        "name": "AI Agent1"
+      },
+      {
+        "parameters": {
+          "sessionIdType": "customKey",
+          "sessionKey": "={{ $('Gmail Trigger').item.json.threadId }}",
+          "contextWindowLength": 10
+        },
+        "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+        "typeVersion": 1.3,
+        "position": [
+          720,
+          432
+        ],
+        "id": "3126c9cc-c064-4622-832d-a0271566d563",
+        "name": "Simple Memory1"
+      },
+      {
+        "parameters": {
+          "descriptionType": "manual",
+          "toolDescription": "Use this tool to Create an event in Google Calendar",
+          "calendar": {
+            "__rl": true,
+            "value": "a.r.s3.alireza@gmail.com",
+            "mode": "list",
+            "cachedResultName": "a.r.s3.alireza@gmail.com"
+          },
+          "start": "={{ $fromAI('Start') || $now }}",
+          "end": "={{ $fromAI('End') || $now.plus({ hours: 1 }) }}",
+          "additionalFields": {}
+        },
+        "type": "n8n-nodes-base.googleCalendarTool",
+        "typeVersion": 1.3,
+        "position": [
+          1024,
+          528
+        ],
+        "id": "a82986dd-23a8-48e4-8337-dad0f0aa540f",
+        "name": "Create event1",
+        "credentials": {
+          "googleCalendarOAuth2Api": {
+            "id": "d7WAE0ATT1mwZ4tG",
+            "name": "Google Calendar account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "descriptionType": "manual",
+          "toolDescription": "Use this tool to Get many events in Google Calendar",
+          "operation": "getAll",
+          "calendar": {
+            "__rl": true,
+            "value": "a.r.s3.alireza@gmail.com",
+            "mode": "list",
+            "cachedResultName": "a.r.s3.alireza@gmail.com"
+          },
+          "returnAll": true,
+          "timeMin": "={{ $fromAI('After') || $now }}",
+          "timeMax": "={{ $fromAI('Before') || $now.plus({ hours: 24 }) }}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.googleCalendarTool",
+        "typeVersion": 1.3,
+        "position": [
+          864,
+          528
+        ],
+        "id": "cf0148c9-fe43-48a0-bbd8-50d485cbf07a",
+        "name": "Get event1",
+        "credentials": {
+          "googleCalendarOAuth2Api": {
+            "id": "d7WAE0ATT1mwZ4tG",
+            "name": "Google Calendar account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "descriptionType": "manual",
+          "toolDescription": "Use this tool to Update an event in Google Calendar",
+          "operation": "update",
+          "calendar": {
+            "__rl": true,
+            "value": "a.r.s3.alireza@gmail.com",
+            "mode": "list",
+            "cachedResultName": "a.r.s3.alireza@gmail.com"
+          },
+          "eventId": "={{ $fromAI('Event_ID') || null }}",
+          "updateFields": {}
+        },
+        "type": "n8n-nodes-base.googleCalendarTool",
+        "typeVersion": 1.3,
+        "position": [
+          1168,
+          496
+        ],
+        "id": "62001eee-72be-4941-ac8e-643b74e2a0dd",
+        "name": "Update event1",
+        "credentials": {
+          "googleCalendarOAuth2Api": {
+            "id": "d7WAE0ATT1mwZ4tG",
+            "name": "Google Calendar account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "delete",
+          "calendar": {
+            "__rl": true,
+            "value": "a.r.s3.alireza@gmail.com",
+            "mode": "list",
+            "cachedResultName": "a.r.s3.alireza@gmail.com"
+          },
+          "eventId": "={{ $fromAI('Event_ID') || null }}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.googleCalendarTool",
+        "typeVersion": 1.3,
+        "position": [
+          1312,
+          432
+        ],
+        "id": "e3389553-0843-45e3-89ad-b4cbafe9cab9",
+        "name": "Delete event1",
+        "credentials": {
+          "googleCalendarOAuth2Api": {
+            "id": "d7WAE0ATT1mwZ4tG",
+            "name": "Google Calendar account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "chatId": "={{ $('Telegram Trigger').item}}",
+          "additionalFields": {}
+        },
+        "type": "n8n-nodes-base.telegram",
+        "typeVersion": 1.2,
+        "position": [
+          1152,
+          0
+        ],
+        "id": "0cdcfd04-30a1-488e-9079-0b99f240eaca",
+        "name": "Send a text message",
+        "webhookId": "ef72b715-9c40-4892-9872-3e8243d60246",
+        "credentials": {
+          "telegramApi": {
+            "id": "9PBaEVbiPe8FZHio",
+            "name": "Telegram account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "model": {
+            "__rl": true,
+            "mode": "list",
+            "value": "gpt-5-mini"
+          },
+          "builtInTools": {},
+          "options": {}
+        },
+        "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+        "typeVersion": 1.3,
+        "position": [
+          672,
+          208
+        ],
+        "id": "926036e9-c4ed-471a-93a4-22228e4ad3d1",
+        "name": "OpenAI Chat Model"
+      },
+      {
+        "parameters": {
+          "resource": "audio",
+          "operation": "transcribe",
+          "options": {}
+        },
+        "type": "@n8n/n8n-nodes-langchain.openAi",
+        "typeVersion": 2.1,
+        "position": [
+          528,
+          -224
+        ],
+        "id": "46edb6ab-f0f8-464b-8a82-4e7c49da452d",
+        "name": "Transcribe a recording"
+      }
+    ],
+    "connections": {
+      "Telegram Trigger": {
+        "main": [
+          [
+            {
+              "node": "Text or Audio",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get a file": {
+        "main": [
+          [
+            {
+              "node": "Transcribe a recording",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Edit Fields": {
+        "main": [
+          [
+            {
+              "node": "AI Agent1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Text or Audio": {
+        "main": [
+          [
+            {
+              "node": "Get a file",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Edit Fields",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "AI Agent1": {
+        "main": [
+          [
+            {
+              "node": "Send a text message",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Simple Memory1": {
+        "ai_memory": [
+          [
+            {
+              "node": "AI Agent1",
+              "type": "ai_memory",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Create event1": {
+        "ai_tool": [
+          [
+            {
+              "node": "AI Agent1",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get event1": {
+        "ai_tool": [
+          [
+            {
+              "node": "AI Agent1",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Update event1": {
+        "ai_tool": [
+          [
+            {
+              "node": "AI Agent1",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Delete event1": {
+        "ai_tool": [
+          [
+            {
+              "node": "AI Agent1",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "OpenAI Chat Model": {
+        "ai_languageModel": [
+          [
+            {
+              "node": "AI Agent1",
+              "type": "ai_languageModel",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Transcribe a recording": {
+        "main": [
+          [
+            {
+              "node": "AI Agent1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "pinData": {},
+    "meta": {
+      "templateCredsSetupCompleted": true,
+      "instanceId": "53cb2a5d6415c009af87d6d4f6f11af3ba99c2fc1d6e7cfd9cbbda036fcc16b6"
+    }
+  }
